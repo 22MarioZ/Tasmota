@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 02.11.2020
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola - Updated by bovirus - rev. 13.11.2020
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -673,6 +673,8 @@
 #define D_SENSOR_A4988_MS1     "A4988 - MS1"
 #define D_SENSOR_OUTPUT_HI     "Output - Hi"
 #define D_SENSOR_OUTPUT_LO     "Output - Lo"
+#define D_SENSOR_AS608_TX      "AS608 - TX"
+#define D_SENSOR_AS608_RX      "AS608 - RX"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 - TX"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 - RX"
 #define D_SENSOR_DDSU666_TX    "DDSU666 - TX"
@@ -727,8 +729,8 @@
 #define D_SENSOR_TCP_RXD       "TCP - RX"
 #define D_SENSOR_IEM3000_TX    "iEM3000 - TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 - RX"
-#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC Tx"
-#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC Rx"
+#define D_SENSOR_MIEL_HVAC_TX  "MiEl HVAC - TX"
+#define D_SENSOR_MIEL_HVAC_RX  "MiEl HVAC - RX"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -755,6 +757,7 @@
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
@@ -859,5 +862,39 @@
 #define D_OVERLOAD        "ADPS"
 #define D_MAX_POWER       "Potenza max"
 #define D_MAX_CURRENT     "Corrente max"
+
+// xsns_79_as608.ino
+#define D_FP_ENROLL_PLACEFINGER "Appoggia impronta"
+#define D_FP_ENROLL_REMOVEFINGER "Rimuovi impronta"
+#define D_FP_ENROLL_PLACESAMEFINGER "Appoggia di nuovo stessa impronta"
+#define D_FP_ENROLL_RETRY "Errore quindi riprova"
+#define D_FP_ENROLL_RESTART "Riavvia"
+#define D_FP_ENROLL_ERROR "Errore"
+#define D_FP_ENROLL_RESET "Ripristina"
+#define D_FP_ENROLL_ACTIVE "Attivo"
+#define D_FP_ENROLL_INACTIVE "Non attivo"
+// Indexed by Adafruit_Fingerprint.h defines
+#define D_FP_PACKETRECIEVEERR "Errore comunicazione"        // 0x01 Error when receiving data package
+#define D_FP_NOFINGER ""                                    // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL "Errore immagine"                    // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Immmagine troppo danneggiata"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Impronta troppo piccola"          // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Nessuna corrispondenza"               // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Corrispondenza non trovata"          // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "L'impronta non corrisponde"    // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Locazione errata"                 // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Errore intervallo DB"             // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Errore funzione upload"     // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Errore risposta pacchetto" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Errore upload"                     // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Errore eliminazione"               // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "Errore azzeramento DB"            // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Errore password"                     // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Immagine non valida"             // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Errore scrittura flash"              // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Numero non valido"                 // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Codice indirizzo"                    // 0x20 Address code
+#define D_FP_PASSVERIFY "Password verificata"               // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Errore"                          // Any other error
 
 #endif  // _LANGUAGE_IT_IT_H_

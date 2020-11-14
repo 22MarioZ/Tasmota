@@ -141,6 +141,7 @@
 | USE_EZOO2             | - | - | - | - | - | - | - |
 | USE_EZOORP            | - | - | - | - | - | - | - |
 | USE_EZOPH             | - | - | - | - | - | - | - |
+| USE_EZOPMP            | - | - | - | - | - | - | - |
 | USE_EZOPRS            | - | - | - | - | - | - | - |
 | USE_EZORGB            | - | - | - | - | - | - | - |
 | USE_EZORTD            | - | - | - | - | - | - | - |
@@ -164,6 +165,7 @@
 | USE_TASMOTA_CLIENT    | - | - | - | - | - | - | - |
 | USE_OPENTHERM         | - | - | - | - | - | - | - |
 | USE_MIEL_HVAC         | - | - | - | - | - | - | - |
+| USE_AS608             | - | - | - | - | - | - | - |
 | USE_TCP_BRIDGE        | - | - | - | - | - | - | - | zbbridge
 |                       |   |   |   |   |   |   |   |
 | USE_NRF24             | - | - | - | - | - | - | - |

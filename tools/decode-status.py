@@ -168,8 +168,9 @@ a_setoption = [[
     "Use friendly name in zigbee topic (use with SetOption89)",
     "Set dimmer low on rotary dial after power off"
     ],[
-    "Detach Swiches from Relays and enable MQTT action state for all the SwitchModes",
-    "","","",
+    "Detach Switches from Relays and enable MQTT action state for all the SwitchModes",
+    "Enable ESP32 MI32 BLE",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -236,7 +237,7 @@ a_features = [[
     ],[
     "USE_EZOORP","USE_EZORTD","USE_EZOHUM","USE_EZOEC",
     "USE_EZOCO2","USE_EZOO2","USE_EZOPRS","USE_EZOFLO",
-    "USE_EZODO","USE_EZORGB","","",
+    "USE_EZODO","USE_EZORGB","USE_EZOPMP","USE_AS608",
     "","","","",
     "","","","",
     "","","","",
@@ -269,7 +270,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20201102 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20201113 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

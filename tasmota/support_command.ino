@@ -40,7 +40,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
-   "|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
+   "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif //ESP32
   ;
 
@@ -67,7 +67,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver
 #ifdef ESP32
-  ,&CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
+  , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif //ESP32
   };
 
@@ -227,7 +227,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     type[i] = '\0';
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
 
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
@@ -955,6 +955,12 @@ void CmndSetoption(void)
           }
           else if (5 == ptype) {           // SetOption114 .. 145
             bitWrite(Settings.flag5.data, pindex, XdrvMailbox.payload);
+            switch (pindex) {
+              case 1:                      // SetOption115 - Enable ESP32 MI32
+                Settings.flag3.sleep_normal = 1;  // SetOption60 - Enable normal sleep instead of dynamic sleep
+                TasmotaGlobal.restart_flag = 2;
+                break;
+            }
           }
         } else {
           ptype = 99;                      // Command Error
@@ -1191,8 +1197,6 @@ void CmndGpio(void)
 void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_t &lines) {
   uint32_t ridx;
   uint32_t midx;
-  myio cmodule;
-  ModuleGpios(&cmodule);
   bool jsflg = false;
   for (uint32_t i = offset; i < size; i++) {  // Skip ADC_NONE
     if (NiceList == nullptr) {
@@ -1201,7 +1205,6 @@ void ShowGpios(const uint16_t *NiceList, uint32_t size, uint32_t offset, uint32_
     } else {
       ridx = pgm_read_word(NiceList + i) & 0xFFE0;
       midx = BGPIO(ridx);
-      if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
     }
     if (!jsflg) {
       Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
@@ -1242,7 +1245,7 @@ void CmndTemplate(void)
 
   bool error = false;
 
-  if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be parameter
+  if (strchr(XdrvMailbox.data, '{') == nullptr) {  // If no JSON it must be parameter
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= MAXMODULE)) {
       XdrvMailbox.payload--;
       if (ValidTemplateModule(XdrvMailbox.payload)) {
@@ -1550,7 +1553,7 @@ void CmndHostname(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     SettingsUpdateText(SET_HOSTNAME, (SC_DEFAULT == Shortcut()) ? WIFI_HOSTNAME : XdrvMailbox.data);
-    if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+    if (strchr(SettingsText(SET_HOSTNAME), '%') != nullptr) {
       SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     }
     TasmotaGlobal.restart_flag = 2;
@@ -1643,7 +1646,7 @@ void CmndInterlock(void)
   if (max_relays > sizeof(Settings.interlock[0]) * 8) { max_relays = sizeof(Settings.interlock[0]) * 8; }
   if (max_relays > 1) {                                         // Only interlock with more than 1 relay
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {                    // Interlock entry
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {                    // Interlock entry
         for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }  // Reset current interlocks
         char *group;
         char *q;
@@ -1801,7 +1804,7 @@ void CmndTimeStdDst(uint32_t ts)
 {
   // TimeStd 0/1, 0/1/2/3/4, 1..12, 1..7, 0..23, +/-780
   if (XdrvMailbox.data_len > 0) {
-    if (strstr(XdrvMailbox.data, ",") != nullptr) {   // Process parameter entry
+    if (strchr(XdrvMailbox.data, ',') != nullptr) {   // Process parameter entry
       uint32_t tpos = 0;                      // Parameter index
       int value = 0;
       char *p = XdrvMailbox.data;                           // Parameters like "1, 2,3 , 4 ,5, -120" or ",,,,,+240"
@@ -2061,6 +2064,11 @@ void CmndDriver(void)
 
 #ifdef ESP32
 
+void CmndInfo(void) {
+  NvsInfo();
+  ResponseCmndDone();
+}
+
 void CmndCpuFrequency(void) {
   if ((80 == XdrvMailbox.payload) || (160 == XdrvMailbox.payload) || (240 == XdrvMailbox.payload)) {
     setCpuFrequencyMhz(XdrvMailbox.payload);
@@ -2077,7 +2085,7 @@ void CmndTouchCal(void)
   }
   Response_P(PSTR("{\"" D_CMND_TOUCH_CAL "\": %u"), TOUCH_BUTTON.calibration);
   ResponseJsonEnd();
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("Button Touchvalue Hits,"));
+  AddLog_P(LOG_LEVEL_INFO, PSTR("Button Touchvalue Hits,"));
 }
 
 void CmndTouchThres(void)
