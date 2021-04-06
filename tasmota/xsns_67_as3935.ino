@@ -1,7 +1,7 @@
 /*
   xsns_67_as3935.ino - AS3935 Franklin Lightning Sensor support for Tasmota
 
-  Copyright (C) 2020  Martin Wagner
+  Copyright (C) 2021  Martin Wagner
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ const char* const S_JSON_AS3935_COMMAND_CAL[] PROGMEM = {"" D_AS3935_CAL_FAIL ""
 
 const char S_JSON_AS3935_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_AS3935 "\":{\"%s\":%s}}";
 const char S_JSON_AS3935_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_AS3935 "\":{\"%s\":%d}}";
-const char S_JSON_AS3935_COMMAND_SETTINGS[] PROGMEM = "{\"AS3935_Settings\":{\"Gain\":%s,\"NFfloor\":%d,\"uVrms\":%d,\"Tunecaps\":%d,\"MinNumLight\":%d,\"Rejektion\":%d,\"Wdthreshold\":%d,\"MinNFstage\":%d,\"NFAutoTime\":%d,\"DisturberAutoTime\":%d,\"Disturber\":%s,\"NFauto\":%s,\"Disturberauto\":%s,\"NFautomax\":%s,\"Mqttlightevent\":%s,\"Mqttnoirqevent\":%s}}";
+const char S_JSON_AS3935_COMMAND_SETTINGS[] PROGMEM = "{\"AS3935_Settings\":{\"Gain\":%s,\"NFfloor\":%d,\"uVrms\":%d,\"Tunecaps\":%d,\"MinNumLight\":%d,\"Rejection\":%d,\"Wdthreshold\":%d,\"MinNFstage\":%d,\"NFAutoTime\":%d,\"DisturberAutoTime\":%d,\"Disturber\":%s,\"NFauto\":%s,\"Disturberauto\":%s,\"NFautomax\":%s,\"Mqttlightevent\":%s,\"Mqttnoirqevent\":%s}}";
 
 const char kAS3935_Commands[] PROGMEM  = "power|setnf|setminstage|setml|default|setgain|settunecaps|setrej|setwdth|disttime|nftime|disturber|autonf|autodisturber|autonfmax|lightevent|noirqevent|settings|calibrate";
 
@@ -150,7 +150,7 @@ struct {
   volatile uint32_t pulse = 0;
 } as3935_sensor;
 
-void ICACHE_RAM_ATTR AS3935Isr(void) {
+void IRAM_ATTR AS3935Isr(void) {
   as3935_sensor.detected = true;
   as3935_sensor.icount++;
 }
@@ -176,7 +176,7 @@ void AS3935WriteRegister(uint8_t reg, uint8_t mask, uint8_t shift, uint8_t data)
 
 /********************************************************************************************/
 // Autotune Caps
-void ICACHE_RAM_ATTR AS3935CountFreq(void) {
+void IRAM_ATTR AS3935CountFreq(void) {
   if (as3935_sensor.dispLCO)
     as3935_sensor.pulse++;
 }
@@ -218,7 +218,7 @@ bool AS3935AutoTuneCaps(uint8_t irqpin) {
 // functions
 bool AS3935CalRCOResult(void) {
   if(AS3935ReadRegister(CAL_SRCO_NOK) || AS3935ReadRegister(CAL_TRCO_NOK)) {
-    AddLog_P(LOG_LEVEL_INFO, PSTR("I2C: AS3935 Fatal Failure of TRCO or SRCO calibration"));
+    AddLog(LOG_LEVEL_INFO, PSTR("I2C: AS3935 Fatal Failure of TRCO or SRCO calibration"));
     return false;
   }
   return true;
@@ -514,7 +514,7 @@ void AS3935Detect(void) {
         if (!AS3935Setup()) return;
       as3935_sensor.active = true;
     } else {
-      AddLog_P(LOG_LEVEL_INFO, PSTR("I2C: AS3935 GPIO Pin not defined!"));
+      AddLog(LOG_LEVEL_INFO, PSTR("I2C: AS3935 GPIO Pin not defined!"));
     }
   }
 }
