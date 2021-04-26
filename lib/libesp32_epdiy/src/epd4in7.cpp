@@ -42,11 +42,15 @@
 
 #define WAVEFORM EPD_BUILTIN_WAVEFORM
 
-extern uint8_t *buffer;
+uint8_t *epd47_buffer;
 
-int temperature;
+int temperature = 25;
 
 EpdiyHighlevelState hl;
+
+uint16_t Epd47::GetColorFromIndex(uint8_t index) {
+  return index & 0xf;
+}
 
 Epd47::Epd47(int16_t dwidth, int16_t dheight) :  Renderer(dwidth, dheight) {
   width = dwidth;
@@ -56,17 +60,33 @@ Epd47::Epd47(int16_t dwidth, int16_t dheight) :  Renderer(dwidth, dheight) {
 int32_t Epd47::Init(void) {
   epd_init(EPD_LUT_1K);
   hl = epd_hl_init(WAVEFORM);
-  buffer = epd_hl_get_framebuffer(&hl);
-
+  epd47_buffer = epd_hl_get_framebuffer(&hl);
+  lvgl_param.fluslines = 10;
   return 0;
 }
 
 void Epd47::DisplayInit(int8_t p, int8_t size, int8_t rot, int8_t font) {
 
-  if (p ==  DISPLAY_INIT_FULL) {
+
+  if (p ==  DISPLAY_INIT_MODE) {
     epd_poweron();
     epd_clear();
     epd_poweroff();
+  }
+  if (p ==  DISPLAY_INIT_FULL) {
+    memset(hl.back_fb, 0xff, width * height / 2);
+    epd_poweron();
+    epd_clear();
+    epd_hl_update_screen(&hl, MODE_GC16, temperature);
+    epd_poweroff();
+    return;
+  }
+  if (p ==  DISPLAY_INIT_PARTIAL) {
+    memset(hl.back_fb, 0xff, width * height / 2);
+    epd_poweron();
+    epd_hl_update_screen(&hl, MODE_GL16, temperature);
+    epd_poweroff();
+    return;
   }
   setRotation(rot);
   setTextWrap(false);
@@ -86,7 +106,7 @@ void Epd47::Updateframe() {
 void Epd47::fillScreen(uint16_t color) {
   color &= 0xf;
    uint8_t icol = (color << 4) | color;
-   memset(buffer, icol, width * height / 2);
+   memset(epd47_buffer, icol, width * height / 2);
 }
 
 #define _swap(a, b) { uint16_t t = a; a = b; b = t; }
@@ -94,6 +114,7 @@ void Epd47::fillScreen(uint16_t color) {
 void Epd47::drawPixel(int16_t x, int16_t y, uint16_t color) {
 uint16_t xp = x;
 uint16_t yp = y;
+uint8_t *buf_ptr;
 
   switch (getRotation()) {
     case 1:
@@ -107,14 +128,13 @@ uint16_t yp = y;
     case 3:
       _swap(xp, yp);
       yp = height - yp - 1;
+
       break;
   }
 
-    uint32_t maxsize = width * height / 2;
-    uint8_t *buf_ptr = &buffer[yp * width / 2 + xp / 2];
-    if ((uint32_t)buf_ptr >= (uint32_t)buffer + maxsize) {
-      return;
-    }
+  if (xp >= width) return;
+  if (yp >= height) return;
+  buf_ptr = &epd47_buffer[yp * width / 2 + xp / 2];
 
     if (xp % 2) {
         *buf_ptr = (*buf_ptr & 0x0F) | (color << 4);
@@ -137,26 +157,42 @@ void Epd47::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 }
 
 void Epd47::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-  xp = x0;
-  yp = y0;
-  //setAddrWindow_int(x0,y0,x1-1,y1-1);
+
+  // just save params or update frame
+  if (!x0 && !y0 && !x1 && !y1) {
+    //Updateframe();
+  } else {
+    seta_xp1 = x0;
+    seta_xp2 = x1;
+    seta_yp1 = y0;
+    seta_yp2 = y1;
+  }
+
 }
 
 void Epd47::pushColors(uint16_t *data, uint16_t len, boolean first) {
-  uint16_t color;
-  uint16_t cxp = xp;
-  while (len--) {
-    color = *data++;
-    uint8_t red = ((color >> 11) & 0x1f) << 3;
-    uint8_t green = ((color >> 5) & 0x3f) << 2;
-    uint8_t blue = (color & 0x1f) << 3;
-    color = (red + green + blue) / 3;
-    color >>= 4;
-    drawPixel(cxp, yp, color);
-    cxp++;
-  }
-  yp++;
+    // stupid bw version
+uint16_t x1 = seta_xp1;
+uint16_t x2 = seta_xp2;
+uint16_t y1 = seta_yp1;
+uint16_t y2 = seta_yp2;
 
+    for (uint32_t y = y1; y < y2; y++) {
+      for (uint32_t x = x1; x < x2; x++) {
+        uint16_t color = *data++;
+        uint8_t red = ((color >> 11) & 0x1f) << 3;
+        uint8_t green = ((color >> 5) & 0x3f) << 2;
+        uint8_t blue = (color & 0x1f) << 3;
+        color = (red + green + blue) / 3;
+        color >>= 4;
+        drawPixel(x, y, color);
+        len--;
+        if (!len) {
+          seta_yp1 = y + 1;
+          return;
+        }
+      }
+    }
 }
 
 /* END OF FILE */

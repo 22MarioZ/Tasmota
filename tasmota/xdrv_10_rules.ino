@@ -174,6 +174,7 @@ struct RULES {
   uint16_t last_minute = 60;
   uint16_t vars_event = 0;   // Bitmask supporting MAX_RULE_VARS bits
   uint16_t mems_event = 0;   // Bitmask supporting MAX_RULE_MEMS bits
+  bool teleperiod = false;
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
 
@@ -347,7 +348,8 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
   }
 
   if (!needsCompress) {                       // the rule fits uncompressed, so just copy it
-    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
+//    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]));
+    strlcpy(Settings.rules[idx] + offset, content, sizeof(Settings.rules[idx]) - offset);
     if (0 == Settings.rules[idx][0]) {
       Settings.rules[idx][1] = 0;
     }
@@ -419,7 +421,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 
   // Step1: Analyse rule
   String rule_expr = rule;                             // "TELE-INA219#CURRENT>0.100"
-  if (TasmotaGlobal.rule_teleperiod) {
+  if (Rules.teleperiod) {
     int ppos = rule_expr.indexOf(F("TELE-"));          // "TELE-INA219#CURRENT>0.100" or "INA219#CURRENT>0.100"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_expr = rule.substring(5);                     // "INA219#CURRENT>0.100" or "SYSTEM#BOOT"
@@ -432,7 +434,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   // rule_param = "0.100" or "%VAR1%"
 
 #ifdef DEBUG_RULES
-//  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM1: expr %s, name %s, param %s"), rule_expr.c_str(), rule_name.c_str(), rule_param.c_str());
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RM1: Teleperiod %d, Expr %s, Name %s, Param %s"), Rules.teleperiod, rule_expr.c_str(), rule_name.c_str(), rule_param.c_str());
 #endif
 
   char rule_svalue[80] = { 0 };
@@ -759,9 +761,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%TOPIC%"), TasmotaGlobal.mqtt_topic);
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
-      String mac_address = WiFi.macAddress();
-      mac_address.replace(":", "");
-      RulesVarReplace(commands, F("%MACADDR%"), mac_address);
+      RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
@@ -853,7 +853,7 @@ void RulesInit(void)
       bitWrite(Settings.rule_once, i, 0);
     }
   }
-  TasmotaGlobal.rule_teleperiod = false;
+  Rules.teleperiod = false;
 }
 
 void RulesEvery50ms(void)
@@ -2067,7 +2067,7 @@ void CmndRule(void)
       XdrvMailbox.index = i;
       XdrvMailbox.data[0] = data;    // Only 0 or "
       CmndRule();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
     ResponseClear();                 // Disable further processing
     return;
@@ -2122,7 +2122,7 @@ void CmndRule(void)
         size_t last_index = start_index + MAX_RULE_SIZE - 3;        // set max length to what would fit uncompressed, i.e. MAX_RULE_SIZE - 3 (first NULL + length + last NULL)
         if (last_index < rule_len) {                                // if we didn't reach the end, try to shorten to last space character
           int32_t next_index = rule.lastIndexOf(" ", last_index);
-          if (next_index > 0) {                                     // if space was found and is not at the first position (i.e. we are progressing)
+          if (next_index > start_index) {                           // if space was found and is not before start_index (i.e. we are progressing)
             last_index = next_index;                                // shrink to the last space
           }                                                         // otherwise it means there are no spaces, we need to cut somewhere even if the result cannot be entered back
         } else {
@@ -2138,10 +2138,10 @@ void CmndRule(void)
       rule = rule.substring(0, MAX_RULE_SIZE);
       rule += F("...");
     }
-    // snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
+    // snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}}"),
     //   XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
     //   GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
-    snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}"),
+    snprintf_P (TasmotaGlobal.mqtt_data, sizeof(TasmotaGlobal.mqtt_data), PSTR("{\"%s%d\":{\"State\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Length\":%d,\"Free\":%d,\"Rules\":\"%s\"}}"),
       XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
       GetStateText(bitRead(Settings.rule_stop, index -1)),
       rule_len, MAX_RULE_SIZE - GetRuleLenStorage(index - 1),
@@ -2339,6 +2339,11 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
+      break;
+    case FUNC_TELEPERIOD_RULES_PROCESS:
+      Rules.teleperiod = true;
+      result = RulesProcess();
+      Rules.teleperiod = false;
       break;
     case FUNC_SAVE_BEFORE_RESTART:
       RulesSaveBeforeRestart();

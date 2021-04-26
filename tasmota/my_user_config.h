@@ -329,6 +329,7 @@
 #define RF_DATA_RADIX          false             // [SetOption28] RF receive data format (false = hexadecimal, true = decimal)
 #define IR_DATA_RADIX          false             // [SetOption29] IR receive data format (false = hexadecimal, true = decimal)
 #define TUYA_SETOPTION_20      false             // [SetOption54] Apply SetOption20 settings to Tuya device
+#define TUYA_TEMP_SET_RES      1                 // [TuyaTempSetRes] Maximum number of decimals (0 - 3) showing sensor TemperatureSet
 #define IR_ADD_RAW_DATA        false             // [SetOption58] Add IR Raw data to JSON message
 #define BUZZER_ENABLE          false             // [SetOption67] Enable buzzer when available
 #define DS18X20_PULL_UP        false             // [SetOption74] Enable internal pullup for single DS18x20 sensor
@@ -396,10 +397,13 @@
   #define DOMOTICZ_OUT_TOPIC   "domoticz/out"    // Domoticz Output Topic
 
 // -- MQTT - Home Assistant Discovery -------------
-#define USE_HOME_ASSISTANT                                   // Enable Home Assistant Discovery Support (+4.1k code, +6 bytes mem)
+#define USE_HOME_ASSISTANT                                   // Enable Home Assistant Discovery Support (+12k code, +6 bytes mem)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX   "homeassistant"  // Home Assistant discovery prefix
   #define HOME_ASSISTANT_LWT_TOPIC   "homeassistant/status"  // home Assistant Birth and Last Will Topic (default = homeassistant/status)
   #define HOME_ASSISTANT_LWT_SUBSCRIBE    true               // Subscribe to Home Assistant Birth and Last Will Topic (default = true)
+
+// -- MQTT - Tasmota Discovery ---------------------
+//#define USE_TASMOTA_DISCOVERY                      // Enable Tasmota Discovery support (+2k code)
 
 // -- MQTT - TLS - AWS IoT ------------------------
 // Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
@@ -780,6 +784,7 @@
   #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530 based devices
 //  #define USE_ZIGBEE_EZSP                        // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
+  // #define USE_ZIGBEE_EEPROM                      // Use the EEPROM from the Sonoff ZBBridge to save Zigbee configuration and data
   #define USE_ZIGBEE_CHANNEL  11                 // Zigbee Channel (11-26)
   #define USE_ZIGBEE_TXRADIO_DBM  20             // Tx Radio power in dBm (only for EZSP, EFR32 can go up to 20 dBm)
 
@@ -897,7 +902,6 @@
 //  #define ETH_CLKMODE       0                    // [EthClockMode] 0 = ETH_CLOCK_GPIO0_IN, 1 = ETH_CLOCK_GPIO0_OUT, 2 = ETH_CLOCK_GPIO16_OUT, 3 = ETH_CLOCK_GPIO17_OUT
 
 #define USE_ADC                                  // Add support for ADC on GPIO32 to GPIO39
-#define USE_HALLEFFECT                           // Add support for internal Hall Effcet sensor connected to GPIO36 and GPIO39
 
 //#define USE_SPI                                  // Add support for hardware SPI
 //#define USE_MI_ESP32                             // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
@@ -910,6 +914,11 @@
 //#define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
 
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
+
+// -- LVGL Graphics Library ---------------------------------
+//#define USE_LVGL                                  // LVGL Engine, requires Berry, takes 440k of Flash
+  #define USE_LVGL_BG_DEFAULT 0x000000              // Default color for the uninitialized background screen (black)
+
 
 #endif  // ESP32
 

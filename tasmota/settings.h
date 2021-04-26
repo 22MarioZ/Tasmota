@@ -121,13 +121,13 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t zerocross_dimmer : 1;         // bit 17 (v8.3.1.4)  - SetOption99  - (PWM Dimmer) Enable zerocross dimmer (1)
     uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - (Zigbee) Remove ZbReceived form JSON message (1)
     uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - (Zigbee) Add the source endpoint as suffix to attributes, ex `Power3` (1) instead of `Power` (0) if sent from endpoint 3
-    uint32_t teleinfo_baudrate : 1;        // bit 20 (v8.4.0.1)  - SetOption102 - (Teleinfo) Set Baud rate for Teleinfo communication to 1200 (0) or 9600 (1)
+    uint32_t obsolete1 : 1;                // bit 20 (v9.3.1.3)  - SetOption102 - teleinfo_baudrate Obsolete Teleinfo config has now a dedicated bit field
     uint32_t mqtt_tls : 1;                 // bit 21 (v8.4.0.1)  - SetOption103 - (MQTT TLS) Enable TLS mode (1) (requires TLS version)
     uint32_t mqtt_no_retain : 1;           // bit 22 (v8.4.0.1)  - SetOption104 - (MQTT) No Retain (1) - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
     uint32_t white_blend_mode : 1;         // bit 23 (v8.4.0.1)  - SetOption105 - (Light) White Blend Mode (1) - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option
     uint32_t virtual_ct : 1;               // bit 24 (v8.4.0.1)  - SetOption106 - (Light) Virtual CT (1) - Creates a virtual White ColorTemp for RGBW lights
     uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - (Light) Virtual CT Channel (1) - signals whether the hardware white is cold CW (true) or warm WW (false)
-    uint32_t teleinfo_rawdata : 1;         // bit 26 (v8.4.0.2)  - SetOption108 - (Teleinfo) Enable Teleinfo + Tasmota Energy device (0) or Teleinfo raw data only (1)
+    uint32_t obsolete2 : 1;                // bit 26 (v9.3.1.3)  - SetOption108 - teleinfo_rawdata Obsolete Teleinfo config has now a dedicated bit field
     uint32_t alexa_gen_1 : 1;              // bit 27 (v8.4.0.3)  - SetOption109 - (Alexa) Gen1 mode (1) - if you only have Echo Dot 2nd gen devices
     uint32_t zb_disable_autobind : 1;      // bit 28 (v8.5.0.1)  - SetOption110 - (Zigbee) Disable auto-config (1) when pairing new devices
     uint32_t buzzer_freq_mode : 1;         // bit 29 (v8.5.0.1)  - SetOption111 - (Buzzer) Use frequency output (1) for buzzer pin instead of on/off signal (0)
@@ -193,7 +193,44 @@ typedef union {
     uint32_t humidity_resolution : 2;
     uint32_t temperature_resolution : 2;
   };
-} SysBitfield2;
+} SysMBitfield1;
+
+typedef union {
+  uint32_t data;                           // Allow bit manipulation
+  struct {
+    uint32_t spare00 : 1;                  // bit 0
+    uint32_t spare01 : 1;                  // bit 1
+    uint32_t spare02 : 1;                  // bit 2
+    uint32_t spare03 : 1;                  // bit 3
+    uint32_t spare04 : 1;                  // bit 4
+    uint32_t spare05 : 1;                  // bit 5
+    uint32_t spare06 : 1;                  // bit 6
+    uint32_t spare07 : 1;                  // bit 7
+    uint32_t spare08 : 1;                  // bit 8
+    uint32_t spare09 : 1;                  // bit 9
+    uint32_t spare10 : 1;                  // bit 10
+    uint32_t spare11 : 1;                  // bit 11
+    uint32_t spare12 : 1;                  // bit 12
+    uint32_t spare13 : 1;                  // bit 13
+    uint32_t spare14 : 1;                  // bit 14
+    uint32_t spare15 : 1;                  // bit 15
+    uint32_t spare16 : 1;                  // bit 16
+    uint32_t spare17 : 1;                  // bit 17
+    uint32_t spare18 : 1;                  // bit 18
+    uint32_t spare19 : 1;                  // bit 19
+    uint32_t spare20 : 1;                  // bit 20
+    uint32_t spare21 : 1;                  // bit 21
+    uint32_t spare22 : 1;                  // bit 22
+    uint32_t spare23 : 1;                  // bit 23
+    uint32_t spare24 : 1;                  // bit 24
+    uint32_t spare25 : 1;                  // bit 25
+    uint32_t spare26 : 1;                  // bit 26
+    uint32_t spare27 : 1;                  // bit 27
+    uint32_t spare28 : 1;                  // bit 28
+    uint32_t spare29 : 1;                  // bit 29
+    uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
+  };
+} SysMBitfield2;
 
 typedef union {
   uint16_t data;
@@ -312,6 +349,20 @@ typedef union {
   uint16_t spare3 : 4;
   };
 } As3935Param;
+
+typedef union {
+  uint32_t data;
+  struct {
+  uint32_t raw_skip : 8;               // raw frame to skip when sending raw data (set to 2 means send 1 frame, then skip 2, ...)
+  uint32_t raw_report_changed : 1;     // Report only changed values in raw frames (only valid if raw_skip=0)
+  uint32_t raw_send : 1;               // Enable sending also real time raw data over MQTT
+  uint32_t raw_limit : 1;              // Limit raw data to minimal relevant fields (the ones moving quickly)
+  uint32_t mode_standard : 1;          // Set Linky Standard Mode (9600 bps stream) else legacy (1200 bps)
+  uint32_t spare4_1 : 4;               // Keep some spares for future uses
+  uint32_t spare8_1 : 8;               // Keep some spares for future uses
+  uint32_t spare8_2 : 8;               // Keep some spares for future uses
+  };
+} TeleinfoCfg;
 
 typedef struct {
   uint32_t usage1_kWhtotal;
@@ -503,7 +554,7 @@ struct {
 
   uint8_t       free_558[100];             // 558
 
-  SysBitfield2  flag2;                     // 5BC
+  SysMBitfield1 flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
@@ -643,10 +694,11 @@ struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
 
-  uint8_t       free_f5e[72];              // F5E - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5f[69];              // F5F - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8
   uint8_t       device_group_tie[4];       // FB0
   SysBitfield5  flag5;                     // FB4
@@ -659,9 +711,7 @@ struct {
   uint32_t      device_group_share_in;     // FCC  Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0  Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4
-
-  int           ex_adc_param4;             // FD8  Free since 9.0.0.1
-
+  SysMBitfield2 mbflag2;                   // FD8
   uint32_t      shutter_button[MAX_SHUTTER_KEYS];  // FDC
   uint32_t      i2c_drivers[3];            // FEC  I2cDriver
   uint32_t      cfg_timestamp;             // FF8
